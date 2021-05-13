@@ -1,15 +1,15 @@
 import sys
-
 # Please implement this function according to Section "Read Configuration File"
 
 
-def load_config_file (filepath):
+def load_config_file(filepath):
     # It should return width, height, waters, woods, foods, golds based on the file
     # Complete the test driver of this function in file_loading_test.py
     width, height = 0, 0
-    waters, woods, foods, golds = [], [], [], [] # list of position tuples
-    label_check = ["Frame:", "Water:", "Wood:", "Food:", "Gold:"]
-    contents_list = []
+    waters, woods, foods, golds = [], [], [], []  # list of position tuples
+    label_check = ["Frame:", "Water:", "Wood:", "Food:", "Gold:"]  # label list
+    contents_list = []  # list that contains all the input data (everything raw)
+    positions = []  # List that only contains positions
 
     # read contents from config file
     f = open(filepath)
@@ -17,7 +17,6 @@ def load_config_file (filepath):
     f.close()
 
     # ------------------------------------check file format------------------------------------
-
     # remove all empty lines and store the data in content_list
     for line in contents:
         if not line.strip():  # empty sequences detected
@@ -35,10 +34,6 @@ def load_config_file (filepath):
             raise SyntaxError("Invalid Configuration File: format error! unexpected label detected!")
 
     # ------------------------------------check the content of Frame-----------------------------
-    # debug
-    # for lines in contents_list:
-    #     print(lines.split())
-
     # check there are only one set of weight and height
     frame = contents_list[0].split()
     if len(frame) != 2:
@@ -63,12 +58,13 @@ def load_config_file (filepath):
     height = int(width_and_height[1])
 
     # -------------------------check the second line to the last line-----------------------------
-    second_to_last_lines = contents_list[1:]
-    print(second_to_last_lines)
+    second_to_last_lines = contents_list[1:] # list that contains all of the raw data except the first line (frame)
+    # print("second_to_last_lines: ")
+    # print(second_to_last_lines)
 
-    # check for non int characters and turn second_to_last_lines into a binary list
+    # check for non int characters and turn "second_to_last_lines" into a binary list
     for i in range(len(second_to_last_lines)):
-        second_to_last_lines[i] = second_to_last_lines[i].split()   # convert lines into lists
+        second_to_last_lines[i] = second_to_last_lines[i].split()  # convert lines into lists
         for num in second_to_last_lines[i][1:]:
             if detect_int(num):
                 continue
@@ -76,24 +72,31 @@ def load_config_file (filepath):
                 raise ValueError("Invalid Configuration File: " + second_to_last_lines[i][0][:-1] + "contains non "
                                                                                                     "integer "
                                                                                                     "characters!")
-    # store the resource locations
+    # store the resource locations into "positions" (positions only, discard the labels)
     for resource_lists in second_to_last_lines:
         resource_name = resource_lists[0][:-1]
         resource_position = resource_lists[1:]
 
         if resource_name == "Water":
-            waters = resource_position
-        elif resource_name == "Wood":
-            woods = resource_position
-        elif resource_name == "Food":
-            foods = resource_position
-        elif resource_name == "Gold":
-            golds = resource_position
+            positions.append(resource_position)
 
-    print(waters)
-    print(woods)
-    print(foods)
-    print(golds)
+        elif resource_name == "Wood":
+            positions.append(resource_position)
+
+        elif resource_name == "Food":
+            positions.append(resource_position)
+
+        elif resource_name == "Gold":
+            positions.append(resource_position)
+
+    # print("EVery resources cord:")
+    # print(waters)
+    # print(woods)
+    # print(foods)
+    # print(golds)
+    # print("positions: ")
+    # print(positions)
+    # print("")
 
     # check for odd number of elements
     for line in second_to_last_lines:
@@ -112,12 +115,52 @@ def load_config_file (filepath):
             if not 0 <= int(num_h) <= height - 1:
                 raise ArithmeticError("Invalid Configuration File: " + line[0][:-1] + " contains a position that "
                                                                                       "is out of map.")
+
+    # convert list of positions into list of position tuples
+    for i in range(len(positions)):
+        x_cord = positions[i][0::2]
+        y_cord = positions[i][1::2]
+        positions[i] = list(zip(x_cord, y_cord))  # a list of position tuples
+
+    # store these position tuples
+    waters = positions[0]
+    woods = positions[1]
+    foods = positions[2]
+    golds = positions[3]
+
+    # print("New positions")
+    # print(positions)
+
     # check for reserved position
+    for p in positions:
+        result = check_reserved_p(p, width, height)
+        if result:
+            continue
+        else:
+            raise ValueError("Invalid Configuration File: The positions of home bases or the positions"
+                             " next to the home bases are occupied !")
 
+    # check for duplicated resource positions
+    count_list = []
+    duplicate_list = []
+    for list_t in positions:
+        for t in list_t:
+            if t not in count_list:
+                count_list.append(t)
+            else:
+                duplicate_list.append(t)
 
+    duplicate_list = list(set([i for i in duplicate_list]))
+    if len(duplicate_list) != 0:
+        raise SyntaxError("Invalid Configuration File: Duplicate position {cord}".format(cord=duplicate_list))
 
-    print("Success!")
-
+    print(width)
+    print(height)
+    print(waters)
+    print(woods)
+    print(foods)
+    print(golds)
+    print("Configuration file {filename} was loaded".format(filename=filepath))
     return width, height, waters, woods, foods, golds
 
 
@@ -129,14 +172,30 @@ def detect_int(s):
     except ValueError:
         return False
 
-# helper function for checking reserved position
-def check_reserved_p(list_p, width, height):
-    
+
+# helper function for checking the reserved position. Return a boolean that indicates whether the input resource
+# positions contains a reserved position or not. Will return True if the input list is clear, False otherwise.
+def check_reserved_p(list_t, width, height):
+    # define the reserved cords lists
+    home_bases = [("1", "1"), (str(width - 2), str(height - 2))]
+    surrounding_p = [("0", "1"), ("1", "0"), ("2", "1"), ("1", "2"), (str(width - 3), str(height - 2)),
+                     (str(width - 2), str(height - 3)), (str(width - 1), str(height - 2)),
+                     (str(width - 2), str(height - 1))]
+    result = True
+    # print(home_bases)
+    # print(surrounding_p)
+    # print("")
+    # print(list_t)
+
+    for cord in list_t:
+        if cord in home_bases or cord in surrounding_p:
+            result = False
+    return result
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 little_battle.py <filepath>")
+        print("Usage: python3 little_battle.py config.txt")
         sys.exit()
     try:
         width_new, height_new, waters_new, woods_new, foods_new, golds_new = load_config_file(sys.argv[1])
