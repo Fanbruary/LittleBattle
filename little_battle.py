@@ -26,32 +26,32 @@ def load_config_file(filepath):
 
     # check there are only five lines
     if len(contents_list) != 5:
-        raise SyntaxError("Invalid Configuration File: format error! exact five lines are expected")
+        raise SyntaxError("Invalid Configuration File: Format error! exact five lines are expected")
 
     # check for required labels
     for line in contents_list:
         if line.split()[0] not in label_check:
-            raise SyntaxError("Invalid Configuration File: format error! unexpected label detected!")
+            raise SyntaxError("Invalid Configuration File: Format error! unexpected label detected!")
 
     # ------------------------------------check the content of Frame-----------------------------
     # check there are only one set of weight and height
     frame = contents_list[0].split()
     if len(frame) != 2:
-        raise SyntaxError("Invalid Configuration File: frame should be in format width x height")
+        raise SyntaxError("Invalid Configuration File: Frame should be in format width x height")
 
     # check for x
     if "x" in frame[1]:
         width_and_height = frame[1].split("x")
     else:
-        raise SyntaxError("Invalid Configuration File: frame should be in format width x height")
+        raise SyntaxError("Invalid Configuration File: Frame should be in format width x height")
 
     # check for weight x height format
     if '' in width_and_height or len(width_and_height) > 2:
-        raise SyntaxError("Invalid Configuration File: frame should be in format width x height")
+        raise SyntaxError("Invalid Configuration File: Frame should be in format width x height")
 
     # check for the range of width and height
     if not 5 <= int(width_and_height[0]) <= 7 or not 5 <= int(width_and_height[1]) <= 7:
-        raise ArithmeticError("Invalid Configuration File: width and height should range from 5 to 7")
+        raise ArithmeticError("Invalid Configuration File: Width and height should range from 5 to 7")
 
     # store width and height
     width = int(width_and_height[0])
@@ -69,7 +69,7 @@ def load_config_file(filepath):
             if detect_int(num):
                 continue
             else:
-                raise ValueError("Invalid Configuration File: " + second_to_last_lines[i][0][:-1] + "contains non "
+                raise ValueError("Invalid Configuration File: " + second_to_last_lines[i][0][:-1] + " Contains non "
                                                                                                     "integer "
                                                                                                     "characters!")
     # store the resource locations into "positions" (positions only, discard the labels)
@@ -89,31 +89,22 @@ def load_config_file(filepath):
         elif resource_name == "Gold":
             positions.append(resource_position)
 
-    # print("EVery resources cord:")
-    # print(waters)
-    # print(woods)
-    # print(foods)
-    # print(golds)
-    # print("positions: ")
-    # print(positions)
-    # print("")
-
     # check for odd number of elements
     for line in second_to_last_lines:
         if len(line) % 2 == 0:
-            raise ValueError("Invalid Configuration File: " + line[0][:-1] + " has an odd number of elements!")
+            raise SyntaxError("Invalid Configuration File: " + line[0][:-1] + " Has an odd number of elements!")
 
     # check for valid position
     for line in second_to_last_lines:
         # check widths are valid
         for num in line[1::2]:
             if not 0 <= int(num) <= width - 1:
-                raise ArithmeticError("Invalid Configuration File: " + line[0][:-1] + " contains a position that "
+                raise ArithmeticError("Invalid Configuration File: " + line[0][:-1] + " Contains a position that "
                                                                                       "is out of map.")
         # check height are valid
         for num_h in line[2::2]:
             if not 0 <= int(num_h) <= height - 1:
-                raise ArithmeticError("Invalid Configuration File: " + line[0][:-1] + " contains a position that "
+                raise ArithmeticError("Invalid Configuration File: " + line[0][:-1] + " Contains a position that "
                                                                                       "is out of map.")
 
     # convert list of positions into list of position tuples
@@ -127,9 +118,6 @@ def load_config_file(filepath):
     woods = positions[1]
     foods = positions[2]
     golds = positions[3]
-
-    # print("New positions")
-    # print(positions)
 
     # check for reserved position
     for p in positions:
@@ -154,12 +142,13 @@ def load_config_file(filepath):
     if len(duplicate_list) != 0:
         raise SyntaxError("Invalid Configuration File: Duplicate position {cord}".format(cord=duplicate_list))
 
-    print(width)
-    print(height)
-    print(waters)
-    print(woods)
-    print(foods)
-    print(golds)
+    print("width: ", width)
+    print("height: ", height)
+    print("Water: ", waters)
+    print("Wood: ", woods)
+    print("Food: ", foods)
+    print("Gold: ", golds)
+    print("")
     print("Configuration file {filename} was loaded".format(filename=filepath))
     return width, height, waters, woods, foods, golds
 
