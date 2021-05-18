@@ -66,7 +66,7 @@ def load_config_file(filepath):
   for i in range(len(second_to_last_lines)):
     second_to_last_lines[i] = second_to_last_lines[i].split()  # convert lines into lists
     for num in second_to_last_lines[i][1:]:
-      if detect_int(num):
+      if is_int(num):
         continue
       else:
         raise ValueError("Invalid Configuration File: " + second_to_last_lines[i][0][:-1] + " Contains non "
@@ -152,9 +152,12 @@ def load_config_file(filepath):
   print("Configuration file {filename} was loaded".format(filename=filepath))
   return width, height, waters, woods, foods, golds
 
+# -----------------------------Helper functions begin-----------------------------
 
-# helper function for detecting non integer character
-def detect_int(s):
+
+# -------------------------File loading helper functions---------------------------
+# helper function for detecting non integer character from string input
+def is_int(s):
   try:
     int(s)
     return True
@@ -179,7 +182,10 @@ def check_reserved_p(list_t, width, height):
   for cord in list_t:
     if cord in home_bases or cord in surrounding_p:
       result = False
+
   return result
+
+# -----------------------------helper functions for fundamental game rules-----------------------------
 
 
 # Function that displays the game board
@@ -259,8 +265,10 @@ def generate_map(w, h, waters1, woods1, foods1, golds1):
 
   return this_map
 
+# -----------------------------helper functions for RECRUIT process-----------------------------
 
-# displays prices for recruiting armies
+
+# Function that displays prices for recruiting armies
 def display_prices():
   print("Recruit Prices:")
   print("  Spearman (S) - 1W, 1F")
@@ -269,15 +277,109 @@ def display_prices():
   print("  Scout (T) - 1W, 1F, 1G")
 
 
-# Check if player has sufficient resources to recruit any units, return true for positive, false otherwise
-def suffi_resource_check():
+# Function that checks if player has sufficient resources to recruit any units, return true for positive,
+# false otherwise
+def suffi_resource_check(flag, resources, prices):
+  player_one_resource = {}
+  player_two_resource = {}
+
+  for key, value in resources.items():
+    if key == "one":
+      player_one_resource = value
+
+    else:
+      player_two_resource = value
+
+  if flag:
+    for army_price in prices:
+      affordable_count = 0
+      costs = prices[army_price]  # cost of a type of army (the inner dictionary)
+
+      for c in costs:
+        if costs[c] <= player_one_resource[c]:
+          affordable_count += 1
+
+      if affordable_count == len(costs):
+        return True
+
+    return False
+
+  else:
+    for army_price in prices:
+      affordable_count = 0
+      costs = prices[army_price]  # cost of a type of army (the inner dictionary)
+
+      for c in costs:
+        if costs[c] <= player_two_resource[c]:
+          affordable_count += 1
+
+      if affordable_count == len(costs):
+        return True
+
+    return False
+
+
+# Function that checks if there are positions available around player's home base for army recruit, return
+# True for positive result, False otherwise
+def recruit_pos_check(flag, w, h):
+  if flag:
+    if game_map[1][ 0] == "  " or game_map[0][1] == "  " \
+            or game_map[1][2] == "  " or game_map[1][2] == "  ":
+      return True
+  else:
+    if game_map[h-2][w-3] == "  " or game_map[h-3][w-2] == "  " \
+            or game_map[h-2][w-1] == "  " or game_map[h-1][w-2] == "  ":
+      return True
+  return False
+
+
+# Function that checks if the passed position is next to this players homebase
+def is_next_to_homebase(pos, flag, w, h):
+  if flag:
+    reserved1 = [["0", "1"], ["1", "0"], ["2", "1"], ["1", "2"]]
+
+    if pos in reserved1:
+      return True
+    else:
+      return False
+
+  else:
+    reserved2 = [[str(w - 3), str(h - 2)], [str(w - 2), str(h - 3)],
+                 [str(w - 1), str(h - 2)], [str(w - 2), str(h - 1)]]
+
+    if pos in reserved2:
+      return True
+    else:
+      return False
+
+
+# Function that checks if the passing position is valid for recruiting, return true for invalid position
+def is_invalid_input_recruit(pos, w, h):
+  if len(pos) != 2:
+    return True
+  x = pos[0]
+  y = pos[1]
+
+  if not is_int(x) or not is_int(y):
+    return True
+
+  if not 0 <= int(x) <= w-1 or not 0 <= int(y) <= h-1:
+    return True
+  return False
+
+# -----------------------------helper functions for MOVE process-----------------------------
+
+
+# Function that checks if this player has any units to move or not. return true for yes false otherwise
+def units_move_check(flag, this_map):
   return True
 
 
-# Check if there are positions available around player's home base for army recruit, return True for
-# positive result, False otherwise
-def recruit_pos_check():
+# Function that checks if the passing positions is valid for moving, return true for invalid position
+def is_invalid_input_move(pos, w, h):
   return True
+
+# --------------------------------------Game loop (Main)---------------------------------------
 
 
 if __name__ == "__main__":
@@ -299,30 +401,42 @@ if __name__ == "__main__":
   print("")
   # -----------------------------turns begin---------------------------------
   play_again = True
-  player_one = True
+  player_flag = True
   years = 617
-  player_one_resources = {"Wood": 1, "Food": 2, "Gold": 3}
-  player_two_resources = {"Wood": 1, "Food": 2, "Gold": 3}
+  players_resources = {"one": {"W": 3, "F": 3, "G": 3},
+                       "two": {"W": 3, "F": 3, "G": 3}}
+  recruit_prices = {"S": {"W": 1, "F": 1},
+                    "A": {"W": 1, "G": 1},
+                    "K": {"F": 1, "G": 1},
+                    "T": {"W": 1, "F": 1, "G": 1}}
+
   army_names = {"S": "Spearman", "A": "Archer", "K": "Knight", "T": "Scout"}
 
   while play_again:  # main loop, keep the game going turn by turn
     print("-Year {}-".format(years))
     print("")
-    if player_one:
+    if player_flag:
       print("+++Player 1's Stage: Recruit Armies+++")
     else:
       print("+++Player 2's Stage: Recruit Armies+++")
     print()
-    print("[Your Asset: Wood-1 Food-2 Gold-3]")
+    if player_flag:
+      print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                 r2=players_resources["one"]["F"],
+                                                                 r3=players_resources["one"]["G"]))
+    else:
+      print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                 r2=players_resources["two"]["F"],
+                                                                 r3=players_resources["two"]["G"]))
 
     # -------------------Recruit stage(step d)-----------------
     while True:
       # sufficient resource check
-      if not suffi_resource_check():
+      if not suffi_resource_check(player_flag, players_resources, recruit_prices):
         print("No resources to recruit any armies")
         break
       # recruit position availability check
-      if not recruit_pos_check():
+      if not recruit_pos_check(player_flag, width, height):
         print("No place to recruit new armies")
         break
       print()
@@ -334,14 +448,6 @@ if __name__ == "__main__":
         print(" ")
         rec_cord = input("You want to recruit a {}. Enter two integers as format 'x y' to place your "
                          "army: ".format(army_names[rec_type]))
-        rec_cord.split()
-
-        rec_x = rec_cord.split()[0]
-        rec_y = rec_cord.split()[1]
-
-        print("rec_cord: " + rec_cord)
-        print(rec_x)
-        print(rec_y)
 
         if rec_cord == "QUIT":
           sys.exit("Game terminated")
@@ -352,11 +458,188 @@ if __name__ == "__main__":
         elif rec_cord == "PRIS":
           display_prices()
 
-        elif game_map[int(rec_y)][int(rec_x)] == "  ":  # positive cases for recruit position
-          print("success")
-          pass
+        # check for invalid input
+        elif is_invalid_input_recruit(rec_cord.split(), width, height):
+          print("Sorry, invalid input. Try again!")
+
+        # check if x y not next to home base or occupied
+        elif not is_next_to_homebase(rec_cord.split(), player_flag, width, height) \
+                or not game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] == "  ":
+          print("You must place your nearly recruited unit in an unoccupied position next to your"
+                "home base. Try again.")
+
+        # Valid input, recruit the desired army
         else:
-            print("Sorry, invalid input. Try again")
+          # -------------------------------player one's action-------------------------------------------
+          if player_flag:
+            # recruit SPEARMAN
+            if rec_type == "S":
+              # check for enough resource and apply the cost
+              if players_resources["one"]["W"] == 0 or players_resources["one"]["F"] == 0:
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["one"]["W"] -= 1
+                players_resources["one"]["F"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "S1"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                           r2=players_resources["one"]["F"],
+                                                                           r3=players_resources["one"]["G"]))
+            # recruit ARCHER
+            elif rec_type == "A":
+              # check for enough resource and apply the cost
+              if players_resources["one"]["W"] == 0 or players_resources["one"]["G"] == 0:
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["one"]["W"] -= 1
+                players_resources["one"]["G"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "A1"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                           r2=players_resources["one"]["F"],
+                                                                           r3=players_resources["one"]["G"]))
+            # recruit KNIGHT
+            elif rec_type == "K":
+              # check for enough resource and apply the cost
+              if players_resources["one"]["F"] == 0 or players_resources["one"]["G"] == 0:
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["one"]["F"] -= 1
+                players_resources["one"]["G"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "K1"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                           r2=players_resources["one"]["F"],
+                                                                           r3=players_resources["one"]["G"]))
+            # recruit SCOUT
+            else:
+              # check for enough resource and apply the cost
+              if players_resources["one"]["W"] == 0 or players_resources["one"]["F"] == 0 \
+                      or players_resources["one"]["G"] == 0:
+
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["one"]["W"] -= 1
+                players_resources["one"]["F"] -= 1
+                players_resources["one"]["G"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "T1"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                           r2=players_resources["one"]["F"],
+                                                                           r3=players_resources["one"]["G"]))
+
+          # -------------------------------player TWO's action-------------------------------------------
+          else:
+            if rec_type == "S":
+              # check for enough resource and apply the cost
+              if players_resources["two"]["W"] == 0 or players_resources["two"]["F"] == 0:
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["two"]["W"] -= 1
+                players_resources["two"]["F"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "S2"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                           r2=players_resources["two"]["F"],
+                                                                           r3=players_resources["two"]["G"]))
+            # recruit ARCHER
+            elif rec_type == "A":
+              # check for enough resource and apply the cost
+              if players_resources["two"]["W"] == 0 or players_resources["two"]["G"] == 0:
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["two"]["W"] -= 1
+                players_resources["two"]["G"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "A2"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                           r2=players_resources["two"]["F"],
+                                                                           r3=players_resources["two"]["G"]))
+            # recruit KNIGHT
+            elif rec_type == "K":
+              # check for enough resource and apply the cost
+              if players_resources["two"]["F"] == 0 or players_resources["two"]["G"] == 0:
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["two"]["F"] -= 1
+                players_resources["two"]["G"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "K2"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                           r2=players_resources["two"]["F"],
+                                                                           r3=players_resources["two"]["G"]))
+            # recruit SCOUT
+            else:
+              # check for enough resource and apply the cost
+              if players_resources["two"]["W"] == 0 or players_resources["two"]["F"] == 0 \
+                      or players_resources["two"]["G"] == 0:
+
+                print("Insufficient resources. Try again!")
+                continue
+
+              else:
+                players_resources["two"]["W"] -= 1
+                players_resources["two"]["F"] -= 1
+                players_resources["two"]["G"] -= 1
+
+                # deploy the army
+                game_map[int(rec_cord.split()[1])][int(rec_cord.split()[0])] = "T2"
+
+                # print feedback
+                print("You has recruited a {}.".format(army_names[rec_type]))
+                print()
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                           r2=players_resources["two"]["F"],
+                                                                           r3=players_resources["two"]["G"]))
 
       # d.iii Edge cases
       elif rec_type == "NO":
@@ -373,4 +656,49 @@ if __name__ == "__main__":
 
       else:
         print("Sorry, invalid input. Try again")  # d.ii Negative cases
-    # 5e
+
+    # -------------------Move stage(step e)-----------------
+    print()
+    if player_flag:
+      print("===Player 1's Stage: Move Armies===")
+    else:
+      print("===Player 2's Stage: Move Armies===")
+
+    while True:
+      print()
+      # check for units moving ability and print armies to move if there are any
+      if units_move_check(player_flag, game_map):
+        move_cord = input("Enter four integers as a format 'x0 y0 x1 y1' to represent move unit from "
+                          "(x0, y0) to (x1, y1) or 'No' to end this turn." )
+
+        if move_cord == "QUIT":
+          sys.exit("Game terminated")
+
+        elif move_cord == "DIS":
+          display_map(game_map)
+
+        elif move_cord == "PRIS":
+          display_prices()
+
+        elif move_cord == "NO":
+          break
+
+        # check for invalid input
+        elif is_invalid_input_move(move_cord.split(), width, height):
+          print("Sorry, invalid input. Try again!")
+
+        else:  # apply move actions
+
+
+
+          pass
+      else:  # if player has no units to move
+        print("No Army to Move: next turn")
+        print()
+        break
+
+
+
+    # increment at the end of every turns
+    player_flag = False
+    years += 1
