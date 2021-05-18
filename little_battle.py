@@ -371,13 +371,111 @@ def is_invalid_input_recruit(pos, w, h):
 
 
 # Function that checks if this player has any units to move or not. return true for yes false otherwise
-def units_move_check(flag, this_map):
-  return True
+def units_move_check(flag, this_map, w, h):
+  players_army = {}
+  resource_label = ["~~", "WW", "FF", "GG"]
+  counters = {"S": "K", "K": "A", "A": "S"}
+
+  if flag:
+    # check are there any armies at all
+    has_army = False
+    for row in range(len(this_map)):
+      for col in range(len(this_map[0])):
+        temp = this_map[row][col]
+
+        if temp[-1] == "1" and not temp[0] == "H":
+          # store all the armies along with their positions
+          if temp in players_army:
+            players_army[temp].append((row, col))
+
+          else:
+            players_army[temp] = [(row, col)]
+
+          has_army = True
+
+    # return false if no armies at all
+    if not has_army:
+      return False
+    else:
+      # loop through every armies with their positions
+      for army in players_army:
+        for pos in players_army[army]:
+          x = pos[0]
+          y = pos[1]
+
+          # do something else if this army is a scout
+          if army[0] =="T":
+            # do scout moving check
+            pass
+
+          # check the position above
+          if x - 1 < 0:
+            pass
+          else:
+            pos_up = (x - 1, y)
+            if this_map[pos_up[0]][pos_up[1]] == "  ": # check surrounding for spaces
+              return True
+            if this_map[pos_up[0]][pos_up[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_up[0]][pos_up[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
+              return True
+            if this_map[pos_up[0]][pos_up[1]][0] == "T":
+              return True
+
+          # check the position below
+          if x + 1 > h - 1:
+            pass
+          else:
+            pos_down = (x + 1, y)
+            if this_map[pos_down[0]][pos_down[1]] == "  ":
+              return True
+            if this_map[pos_down[0]][pos_down[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_down[0]][pos_down[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
+              return True
+            if this_map[pos_down[0]][pos_down[1]][0] == "T":
+              return True
+
+          # check position to the left
+          if y - 1 < 0:
+            pass
+          else:
+            pos_left = (x, y - 1)
+            if this_map[pos_left[0]][pos_left[1]] == "  ":
+              return True
+            if this_map[pos_left[0]][pos_left[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_left[0]][pos_left[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
+              return True
+            if this_map[pos_left[0]][pos_left[1]][0] == "T":
+              return True
+
+          # check position to the right
+          if y + 1 > w - 1:
+            pass
+          else:
+            pos_right = (x, y + 1)
+            if this_map[pos_right[0]][pos_right[1]] == "  ":
+              return True
+            if this_map[pos_right[0]][pos_right[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_right[0]][pos_right[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
+              return True
+            if this_map[pos_right[0]][pos_right[1]][0] == "T":
+              return True
+
+      # print(players_army)
+
+  else:# player 2
+    pass
+
+  return False
+
 
 
 # Function that checks if the passing positions is valid for moving, return true for invalid position
 def is_invalid_input_move(pos, w, h):
-  return True
+  return False
 
 # --------------------------------------Game loop (Main)---------------------------------------
 
@@ -664,10 +762,11 @@ if __name__ == "__main__":
     else:
       print("===Player 2's Stage: Move Armies===")
 
+
     while True:
       print()
       # check for units moving ability and print armies to move if there are any
-      if units_move_check(player_flag, game_map):
+      if units_move_check(player_flag, game_map, width, height):
         move_cord = input("Enter four integers as a format 'x0 y0 x1 y1' to represent move unit from "
                           "(x0, y0) to (x1, y1) or 'No' to end this turn." )
 
@@ -688,10 +787,8 @@ if __name__ == "__main__":
           print("Sorry, invalid input. Try again!")
 
         else:  # apply move actions
+          print("all checked! start moving")
 
-
-
-          pass
       else:  # if player has no units to move
         print("No Army to Move: next turn")
         print()
