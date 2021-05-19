@@ -542,7 +542,7 @@ def units_move_check(flag, this_map, w, h):
 
 
 # Function that checks if the passing positions is valid for moving, return true for invalid position
-def is_invalid_input_move(this_map, pos, w, h):
+def is_invalid_input_move(this_map, pos, w, h, flag):
   army_labels = ["S", "K", "A", "T"]
 
   # check format
@@ -585,6 +585,17 @@ def is_invalid_input_move(this_map, pos, w, h):
   global start, end
   start = army
   end = destination
+
+  # make sure the play only moves his own army
+  if flag:
+    if army[1] == "2":
+      print("You cannot move other player's army!")
+      return True
+  else:
+    if army[1] == "1":
+      print("(You cannot move other player's army!)")
+      return True
+    pass
 
   if army[0] == "S" or army[0] == "K" or army[0] == "A":
     # destination is one step ?
@@ -918,7 +929,7 @@ if __name__ == "__main__":
           break
 
         # check for invalid input
-        elif is_invalid_input_move(game_map, move_cord.split(), width, height):
+        elif is_invalid_input_move(game_map, move_cord.split(), width, height, player_flag):
           print("Sorry, invalid input. Try again!")
 
         # make sure every armies only moves once in each turn
