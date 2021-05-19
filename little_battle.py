@@ -372,10 +372,12 @@ def is_invalid_input_recruit(pos, w, h):
 
 # Function that checks if this player has any units to move or not. return true for yes false otherwise
 def units_move_check(flag, this_map, w, h):
-  players_army = {}
+  player_army_one = {}
+  player_army_two = {}
   resource_label = ["~~", "WW", "FF", "GG"]
-  counters = {"S": "K", "K": "A", "A": "S"}
 
+
+  # player 1
   if flag:
     # check are there any armies at all
     has_army = False
@@ -385,11 +387,11 @@ def units_move_check(flag, this_map, w, h):
 
         if temp[-1] == "1" and not temp[0] == "H":
           # store all the armies along with their positions
-          if temp in players_army:
-            players_army[temp].append((row, col))
+          if temp in player_army_one:
+            player_army_one[temp].append((row, col))
 
           else:
-            players_army[temp] = [(row, col)]
+            player_army_one[temp] = [(row, col)]
 
           has_army = True
 
@@ -398,13 +400,13 @@ def units_move_check(flag, this_map, w, h):
       return False
     else:
       # loop through every armies with their positions
-      for army in players_army:
-        for pos in players_army[army]:
+      for army in player_army_one:
+        for pos in player_army_one[army]:
           x = pos[0]
           y = pos[1]
 
           # do something else if this army is a scout
-          if army[0] =="T":
+          if army[0] == "T":
             # do scout moving check
             pass
 
@@ -417,9 +419,7 @@ def units_move_check(flag, this_map, w, h):
               return True
             if this_map[pos_up[0]][pos_up[1]] in resource_label:  # check surrounding for resources
               return True
-            if this_map[pos_up[0]][pos_up[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
-              return True
-            if this_map[pos_up[0]][pos_up[1]][0] == "T":
+            if this_map[pos_up[0]][pos_up[1]][1] == "2":  # check surrounding for countable enemies
               return True
 
           # check the position below
@@ -431,9 +431,7 @@ def units_move_check(flag, this_map, w, h):
               return True
             if this_map[pos_down[0]][pos_down[1]] in resource_label:  # check surrounding for resources
               return True
-            if this_map[pos_down[0]][pos_down[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
-              return True
-            if this_map[pos_down[0]][pos_down[1]][0] == "T":
+            if this_map[pos_down[0]][pos_down[1]][1] == "2":  # check surrounding for countable enemies
               return True
 
           # check position to the left
@@ -445,9 +443,7 @@ def units_move_check(flag, this_map, w, h):
               return True
             if this_map[pos_left[0]][pos_left[1]] in resource_label:  # check surrounding for resources
               return True
-            if this_map[pos_left[0]][pos_left[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
-              return True
-            if this_map[pos_left[0]][pos_left[1]][0] == "T":
+            if this_map[pos_left[0]][pos_left[1]][1] == "2":  # check surrounding for countable enemies
               return True
 
           # check position to the right
@@ -459,22 +455,154 @@ def units_move_check(flag, this_map, w, h):
               return True
             if this_map[pos_right[0]][pos_right[1]] in resource_label:  # check surrounding for resources
               return True
-            if this_map[pos_right[0]][pos_right[1]][0] == counters[army[0]]:  # check surrounding for countable enemies
-              return True
-            if this_map[pos_right[0]][pos_right[1]][0] == "T":
+            if this_map[pos_right[0]][pos_right[1]][1] == "2":  # check surrounding for countable enemies
               return True
 
-      # print(players_army)
+  # player 2
+  else:
+    # check are there any armies at all
+    has_army = False
+    for row in range(len(this_map)):
+      for col in range(len(this_map[0])):
+        temp = this_map[row][col]
 
-  else:# player 2
-    pass
+        if temp[-1] == "2" and not temp[0] == "H":
+          # store all the armies along with their positions
+          if temp in player_army_two:
+            player_army_two[temp].append((row, col))
 
+          else:
+            player_army_two[temp] = [(row, col)]
+
+          has_army = True
+
+    # return false if no armies at all
+    if not has_army:
+      return False
+    else:
+      # loop through every armies with their positions
+      for army in player_army_two:
+        for pos in player_army_two[army]:
+          x = pos[0]
+          y = pos[1]
+
+          # do something else if this army is a scout
+          if army[0] == "T":
+            # do scout moving check
+            pass
+
+          # check the position above
+          if x - 1 < 0:
+            pass
+          else:
+            pos_up = (x - 1, y)
+            if this_map[pos_up[0]][pos_up[1]] == "  ":  # check surrounding for spaces
+              return True
+            if this_map[pos_up[0]][pos_up[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_up[0]][pos_up[1]][1] == "2":  # check surrounding for countable enemies
+              return True
+
+          # check the position below
+          if x + 1 > h - 1:
+            pass
+          else:
+            pos_down = (x + 1, y)
+            if this_map[pos_down[0]][pos_down[1]] == "  ":
+              return True
+            if this_map[pos_down[0]][pos_down[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_down[0]][pos_down[1]][1] == "2":  # check surrounding for countable enemies
+              return True
+
+          # check position to the left
+          if y - 1 < 0:
+            pass
+          else:
+            pos_left = (x, y - 1)
+            if this_map[pos_left[0]][pos_left[1]] == "  ":
+              return True
+            if this_map[pos_left[0]][pos_left[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_left[0]][pos_left[1]][1] == "2":  # check surrounding for countable enemies
+              return True
+
+          # check position to the right
+          if y + 1 > w - 1:
+            pass
+          else:
+            pos_right = (x, y + 1)
+            if this_map[pos_right[0]][pos_right[1]] == "  ":
+              return True
+            if this_map[pos_right[0]][pos_right[1]] in resource_label:  # check surrounding for resources
+              return True
+            if this_map[pos_right[0]][pos_right[1]][1] == "2":  # check surrounding for countable enemies
+              return True
   return False
 
 
-
 # Function that checks if the passing positions is valid for moving, return true for invalid position
-def is_invalid_input_move(pos, w, h):
+def is_invalid_input_move(this_map, pos, w, h):
+  army_labels = ["S", "K", "A", "T"]
+
+  # check format
+  if len(pos) != 4:
+    print("(Invalid format, four inputs are required!)")
+    return True
+  x1 = pos[0]
+  y1 = pos[1]
+  x2 = pos[2]
+  y2 = pos[3]
+
+  # check for integers
+  if not is_int(x1) or not is_int(y1) or not is_int(x2) or not is_int(y2):
+    print("(Invalid format, four integers are required!)")
+    return True
+
+  x1 = int(x1)
+  y1 = int(y1)
+  pos_start = [y1, x1]  # player version indexes
+  x2 = int(x2)
+  y2 = int(y2)
+  pos_end = [y2, x2]  # actual indexes in the 2D array
+
+  # check for valid position
+  if not 0 <= x1 <= w - 1 or not 0 <= y1 <= h - 1 \
+          or not 0 <= x2 <= w - 1 or not 0 <= y2 <= h - 1:
+    print("(Cannot move outside of game map!)")
+    return True
+
+  # check if pos 1 represents an army
+  if not this_map[y1][x1][0] in army_labels:
+    print("(This unit cannot be moved!)")
+    return True
+
+  army = this_map[y1][x1]  # the army on the board
+  destination = this_map[y2][x2]  # the moving destination on the board
+  army_one_step_away = [[y1-1, x1], [y1+1, x1], [y1, x1-1], [y1, x1+1]]  # positions that one step away from the army
+
+  # store the army and its destination
+  global start, end
+  start = army
+  end = destination
+
+  if army[0] == "S" or army[0] == "K" or army[0] == "A":
+    # destination is one step ?
+    if pos_end not in army_one_step_away:
+      print(pos_start)
+      print(pos_end)
+      print(army_one_step_away)
+      print("(This unit cannot reach the destiny!)")
+      return True
+
+    # check for allies
+    if destination[1] == army[1]:
+      print("(Cannot move to your own army or base!)")
+      return True
+
+  else:  # T
+    pass
+
   return False
 
 # --------------------------------------Game loop (Main)---------------------------------------
@@ -496,7 +624,6 @@ if __name__ == "__main__":
   display_map(game_map)
   display_prices()
   print("(enter PRIS to display the price list)")
-  print("")
   # -----------------------------turns begin---------------------------------
   play_again = True
   player_flag = True
@@ -509,8 +636,10 @@ if __name__ == "__main__":
                     "T": {"W": 1, "F": 1, "G": 1}}
 
   army_names = {"S": "Spearman", "A": "Archer", "K": "Knight", "T": "Scout"}
+  resource_names = {"WW":"Wood", "FF": "Food", "GG":"Gold"}
 
   while play_again:  # main loop, keep the game going turn by turn
+    print("")
     print("-Year {}-".format(years))
     print("")
     if player_flag:
@@ -755,13 +884,17 @@ if __name__ == "__main__":
       else:
         print("Sorry, invalid input. Try again")  # d.ii Negative cases
 
-    # -------------------Move stage(step e)-----------------
+    # -----------------------------Move stage(step e)---------------------------
     print()
     if player_flag:
       print("===Player 1's Stage: Move Armies===")
     else:
       print("===Player 2's Stage: Move Armies===")
 
+    # store the positions that have already been used as destination
+    moved_pos = []
+    r_n_s_label = ["  ", "~~", "WW", "FF", "GG"]
+    counters = {"S": "K", "K": "A", "A": "S"}
 
     while True:
       print()
@@ -769,6 +902,8 @@ if __name__ == "__main__":
       if units_move_check(player_flag, game_map, width, height):
         move_cord = input("Enter four integers as a format 'x0 y0 x1 y1' to represent move unit from "
                           "(x0, y0) to (x1, y1) or 'No' to end this turn." )
+        start = ""
+        end = ""
 
         if move_cord == "QUIT":
           sys.exit("Game terminated")
@@ -783,19 +918,97 @@ if __name__ == "__main__":
           break
 
         # check for invalid input
-        elif is_invalid_input_move(move_cord.split(), width, height):
+        elif is_invalid_input_move(game_map, move_cord.split(), width, height):
           print("Sorry, invalid input. Try again!")
 
-        else:  # apply move actions
-          print("all checked! start moving")
+        # make sure every armies only moves once in each turn
+        elif [move_cord.split()[0], move_cord.split()[1]] in moved_pos:
+          print("Sorry, your armies can only move once in each turn.")
+
+        # apply move result
+        else:
+          # print move result
+          print("")
+          print("You have moved {name} from ({x1},{y1}) to ({x2},{y2})".
+                format(name=army_names[start[0]], x1=move_cord.split()[0], y1=move_cord.split()[1],
+                       x2=move_cord.split()[2], y2=move_cord.split()[3]))
+          # records the destination
+          moved_pos.append([move_cord.split()[2], move_cord.split()[3]])
+
+          start_pos_x1 = int(move_cord.split()[0])
+          start_pos_y1 = int(move_cord.split()[1])
+          start_pos_x2 = int(move_cord.split()[2])
+          start_pos_y2 = int(move_cord.split()[3])
+
+          # updates game board
+
+          # when destination was space or resources or waters
+          if end in r_n_s_label:
+            # move to space
+            if end == "  ":
+              game_map[start_pos_y1][start_pos_x1] = "  "
+              game_map[start_pos_y2][start_pos_x2] = start
+
+            # water destroys army
+            elif end == "~~":
+              game_map[start_pos_y1][start_pos_x1] = "  "
+              print("We lost the army {} due to your command!".format(army_names[start[0]]))
+
+            # collect resources
+            else:
+              game_map[start_pos_y1][start_pos_x1] = "  "
+              game_map[start_pos_y2][start_pos_x2] = start
+              # store the resource
+              if player_flag:
+                players_resources["one"][end[0]] += 2
+                print("Good. We collected 2 {}.".format(resource_names[end]))
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                           r2=players_resources["one"]["F"],
+                                                                           r3=players_resources["one"]["G"]))
+              else:
+                players_resources["two"][end[0]] += 2
+                print("Good. We collected 2 {}.".format(resource_names[end]))
+                print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                           r2=players_resources["two"]["F"],
+                                                                           r3=players_resources["two"]["G"]))
+                print("")
+
+          # when destination was enemy armies
+          else:
+            end_label = end[0]
+            start_label = start[0]
+
+            # encounters an enemy that counters player's army (player's army disappear)
+            if counters[end_label] == start_label:
+              game_map[start_pos_y1][start_pos_x1] = "  "
+              print("We lost the army {} due to your command!".format(army_names[start_label]))
+
+            # encounters a counter enemy (take down the enemy)
+            elif counters[start_label] == end_label:
+              game_map[start_pos_y1][start_pos_x1] = "  "
+              game_map[start_pos_y2][start_pos_x2] = start
+              print("Great! We defeated the enemy {}.".format(army_names[end_label]))
+
+            # encounters a same type of enemy (both disappear)
+            elif start_label == end_label:
+              game_map[start_pos_y1][start_pos_x1] = "  "
+              game_map[start_pos_y2][start_pos_x2] = "  "
+              print("Great! We defeated the enemy {} with massive loss!".format(army_names[end_label]))
+
+            # encounters home base of other player
+            else:
+              print("The army {} captured the enemy's capital".format(army_names[start_label]))
+              print("")
+              commander_name = input("What's your name, commander?")
+              print(" ")
+              print("***Congratulation! Emperor {a} unified the country in {b}.***".format(a=commander_name, b=years))
+              sys.exit("The game is finished!")
 
       else:  # if player has no units to move
         print("No Army to Move: next turn")
         print()
         break
 
-
-
-    # increment at the end of every turns
-    player_flag = False
+    # end of turn, flip the flag and increment the year
+    player_flag = not player_flag
     years += 1
