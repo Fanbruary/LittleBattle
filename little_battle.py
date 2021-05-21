@@ -401,10 +401,19 @@ def get_armies_to_move(flag, this_map):
 # (at the very first part when checking current player has any armies at all, should have called get_armies_to_move,
 # that way can save a lot of running time when the game_map is huge, but since we are only dealing a max 7x7 game board
 # I just left it this way)
-def units_move_check(flag, this_map, w, h):
+def units_move_check(flag, this_map, movable_armies, w, h):
   player_army_one = {}
   player_army_two = {}
   resource_label = ["~~", "WW", "FF", "GG"]
+
+  # If no armies to move
+  count = 0
+  for k, v in movable_armies.items():
+    if not len(movable_armies[k]) == 0:
+      count += 1
+
+  if count == 0:
+    return False
 
   # player 1
   if flag:
@@ -708,7 +717,8 @@ def jump_over_check(this_map, x1, y1, x2, y2):
 
   # get rid of invalid positions
   for pos_two in two_step_pos:
-    if pos_two[0] < 0 or pos_two[1] < 0:
+    if pos_two[0] < 0 or pos_two[1] < 0 or \
+            pos_two[0] > len(this_map) or pos_two[1] > len(this_map[0]):
       two_step_pos.remove(pos_two)
 
   # if destination is exact 2 step away
@@ -721,7 +731,7 @@ def jump_over_check(this_map, x1, y1, x2, y2):
       jumped_over_pos = (y1 - 1, x1)
 
     # if destination is under starting point
-    elif y2 < y1:
+    elif y2 > y1:
       jumped_over_pos = (y1 + 1, x1)
 
     # if destination is on the left of starting point
@@ -733,7 +743,10 @@ def jump_over_check(this_map, x1, y1, x2, y2):
       jumped_over_pos = (y1, x1 + 1)
 
     global jumped_over_label
+    global jumped_over_cord
+
     jumped_over_label = this_map[jumped_over_pos[0]][jumped_over_pos[1]]
+    jumped_over_cord = jumped_over_pos
 
     return True
 
@@ -763,6 +776,7 @@ if __name__ == "__main__":
   play_again = True
   player_flag = True
   years = 617
+  turn_count = 1
   players_resources = {"one": {"W": 2, "F": 2, "G": 2},
                        "two": {"W": 2, "F": 2, "G": 2}}
   recruit_prices = {"S": {"W": 1, "F": 1},
@@ -1064,31 +1078,27 @@ if __name__ == "__main__":
     else:
       print("===Player 2's Stage: Move Armies===")
 
-    print()
-
-    # print armies to move
-    if len(get_armies_to_move(player_flag, game_map)) == 0:
-      print("You have no armies to move")
-    else:
-      print("Armies to Move:")
-      armies_to_move = get_armies_to_move(player_flag, game_map)
-
-      for key, value in armies_to_move.items():
-        name = str(key[0])
-        pos = ""
-        for tuples in armies_to_move[key]:
-          pos += str(tuples) + " "
-        print(" {a}:{b}".format(a=army_names[name], b=pos))
-
     # store the positions that have already been used as destination
     moved_pos = []
     r_n_s_label = ["  ", "~~", "WW", "FF", "GG"]
     counters = {"S": "K", "K": "A", "A": "S"}
+    armies_to_move = get_armies_to_move(player_flag, game_map)
 
     while True:
       print()
       # check for units moving ability and print armies to move if there are any
-      if units_move_check(player_flag, game_map, width, height):
+      if units_move_check(player_flag, game_map, armies_to_move, width, height):
+        print("Armies to Move:")
+        for key, value in armies_to_move.items():
+          name = str(key[0])
+          pos = ""
+          for tuples in armies_to_move[key]:
+            pos += str(tuples) + " "
+
+          if not pos == "":
+            print(" {a}:{b}".format(a=army_names[name], b=pos))
+        print("")
+        # Ask player for moving positions
         move_cord = input("Enter four integers as a format 'x0 y0 x1 y1' to represent move unit from "
                           "(x0, y0) to (x1, y1) or 'No' to end this turn.")
 
@@ -1114,7 +1124,7 @@ if __name__ == "__main__":
           print("Sorry, invalid input. Try again!")
 
         # make sure every armies only moves once in each turn
-        elif [move_cord.split()[0], move_cord.split()[1]] in moved_pos:
+        elif (move_cord.split()[0], move_cord.split()[1]) in moved_pos:
           print("Sorry, your armies can only move once in each turn.")
 
         # apply move result
@@ -1124,14 +1134,16 @@ if __name__ == "__main__":
           print("You have moved {name} from ({x1},{y1}) to ({x2},{y2})".
                 format(name=army_names[start[0]], x1=move_cord.split()[0], y1=move_cord.split()[1],
                        x2=move_cord.split()[2], y2=move_cord.split()[3]))
-          # records the destination
-          moved_pos.append([move_cord.split()[2], move_cord.split()[3]])
 
           # the input indexes
           start_pos_x = int(move_cord.split()[0])
           start_pos_y = int(move_cord.split()[1])
           end_pos_x = int(move_cord.split()[2])
           end_pos_y = int(move_cord.split()[3])
+
+          # records the destination and remove it from armies to move
+          moved_pos.append((end_pos_x, end_pos_y))
+          armies_to_move[start].remove((start_pos_x, start_pos_y))
 
           # updates game board
 
@@ -1140,7 +1152,7 @@ if __name__ == "__main__":
             # check if Scout jumps over an enemy
             if start[0] == "T":
               jumped_over_label = ""  # will be updated in function jump_over_check
-
+              jumped_over_cord = ()
               # if T moved 2 steps
 
               if jump_over_check(game_map, start_pos_x, start_pos_y, end_pos_x, end_pos_y):
@@ -1152,25 +1164,81 @@ if __name__ == "__main__":
 
                 # if T jumped over a resource (collect both of them and print 2 messages)
                 elif jumped_over_label in ["WW", "GG", "FF"]:
+                  # player one
                   if player_flag:
-                    players_resources["one"][end[0]] += 2
-                    players_resources["one"][jumped_over_label[0]] += 2
-                    print("Good. We collected 2 {}.".format(resource_names[end]))
-                    print("Good. We collected 2 {}.".format(resource_names[jumped_over_label]))
-                    print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
-                                                                               r2=players_resources["one"]["F"],
-                                                                               r3=players_resources["one"]["G"]))
-                  else:
-                    players_resources["two"][end[0]] += 2
-                    players_resources["two"][jumped_over_label[0]] += 2
-                    print("Good. We collected 2 {}.".format(resource_names[end]))
-                    print("Good. We collected 2 {}.".format(resource_names[jumped_over_label]))
-                    print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
-                                                                               r2=players_resources["two"]["F"],
-                                                                               r3=players_resources["two"]["G"]))
-                    print("")
-                    continue
+                    # if jumps over resource to reach a resource:
+                    if end in ["WW", "GG", "FF"]:
+                      # update game board
+                      game_map[start_pos_y][start_pos_x] = "  "
+                      game_map[end_pos_y][end_pos_x] = start
+                      game_map[jumped_over_cord[0]][jumped_over_cord[1]] = "  "
 
+                      # update resources
+                      players_resources["one"][end[0]] += 2
+                      players_resources["one"][jumped_over_label[0]] += 2
+                      print("Good. We collected 2 {}.".format(resource_names[end]))
+                      print("Good. We collected 2 {}.".format(resource_names[jumped_over_label]))
+                      print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                                 r2=players_resources["one"]["F"],
+                                                                                 r3=players_resources["one"]["G"]))
+                      continue
+
+                    # if jumps over resource to reach a space
+                    elif end == "  ":
+                      # update game board
+                      game_map[start_pos_y][start_pos_x] = "  "
+                      game_map[end_pos_y][end_pos_x] = start
+                      game_map[jumped_over_cord[0]][jumped_over_cord[1]] = "  "
+
+                      # update resources
+                      players_resources["one"][jumped_over_label[0]] += 2
+                      print("Good. We collected 2 {}.".format(resource_names[jumped_over_label]))
+                      print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["one"]["W"],
+                                                                                 r2=players_resources["one"]["F"],
+                                                                                 r3=players_resources["one"]["G"]))
+                      continue
+
+                  # player two
+                  else:
+                    # if jumps over resource to reach a resource:
+                    if end in ["WW", "GG", "FF"]:
+                      # update game board
+                      game_map[start_pos_y][start_pos_x] = "  "
+                      game_map[end_pos_y][end_pos_x] = start
+                      game_map[jumped_over_cord[0]][jumped_over_cord[1]] = "  "
+
+                      # update resources
+                      players_resources["two"][end[0]] += 2
+                      players_resources["two"][jumped_over_label[0]] += 2
+                      print("Good. We collected 2 {}.".format(resource_names[end]))
+                      print("Good. We collected 2 {}.".format(resource_names[jumped_over_label]))
+                      print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                                 r2=players_resources["two"]["F"],
+                                                                                 r3=players_resources["two"]["G"]))
+                      continue
+
+                    # if jumps over resource to reach a space
+                    elif end == "  ":
+                      # update game board
+                      game_map[start_pos_y][start_pos_x] = "  "
+                      game_map[end_pos_y][end_pos_x] = start
+                      game_map[jumped_over_cord[0]][jumped_over_cord[1]] = "  "
+
+                      # update resources
+                      players_resources["two"][jumped_over_label[0]] += 2
+                      print("Good. We collected 2 {}.".format(resource_names[jumped_over_label]))
+                      print("[Your Asset: Wood-{r1} Food-{r2} Gold-{r3}]".format(r1=players_resources["two"]["W"],
+                                                                                 r2=players_resources["two"]["F"],
+                                                                                 r3=players_resources["two"]["G"]))
+                      continue
+
+                # if T jumps over water
+                elif jumped_over_label == "~~":
+                  game_map[start_pos_y][start_pos_x] = "  "
+                  print("We lost the army {} due to your command!".format(army_names[start[0]]))
+                  continue
+
+                # if T jumps over space
                 else:
                   pass
 
@@ -1238,7 +1306,6 @@ if __name__ == "__main__":
                 print("***Congratulation! Emperor {a} unified the country in {b}.***".format(a=commander_name, b=years))
                 sys.exit("The game is finished!")
 
-
             # encounters an enemy that counters player's army (player's army disappear)
             if counters[end_label] == start_label:
               game_map[start_pos_y][start_pos_x] = "  "
@@ -1263,7 +1330,7 @@ if __name__ == "__main__":
               commander_name = input("What's your name, commander?")
               print(" ")
               print("***Congratulation! Emperor {a} unified the country in {b}.***".format(a=commander_name, b=years))
-              sys.exit("The game is finished!")
+              sys.exit()
 
       else:  # if player has no units to move
         print("No Army to Move: next turn")
@@ -1272,4 +1339,8 @@ if __name__ == "__main__":
 
     # end of turn, flip the flag and increment the year
     player_flag = not player_flag
-    years += 1
+    if turn_count % 2 == 0:
+      years += 1
+    turn_count += 1
+
+
