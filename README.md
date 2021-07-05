@@ -1,8 +1,15 @@
 # LittleBattle
-A turn based board game for two players.
+Intro:
+A turn based board game for two players based on python.
 
-How to run the game:
+Structure:
+config.txt - A txt file that defines initial resources for each player and also contains the initial resource cords on the gameboard.
+file_loading_test.py - a testing .py file which reads all the invalid config.txt files from the folder "invalid files", and pass them into
+                        little_battle.py to test the result of initial configuration loading.  
+little_battle.py - the main file that execute the game.
 
+How to run Little_battle.py:
+by using commandline argument, open terminal and input the following: python little_battle.py config.txt"
 
 Rules:
 1. The game is initialized with a map with resources and two players
@@ -21,13 +28,3 @@ costs 1F, 1G, Scout (T) costs 1W, 1F, 1G
 each turn while Scout (T) can move up to two steps (one step or two steps in the same direction)
 but move only once
 11.  Each player can command an army to collect resources
-
-Game board example:
-  X00 01 02 03 04X
- Y+--------------+
-00|--|  |  |  |
-01|  |H1|  |FF|GG|
-02|WW|  |GG|  |--|
-03|  |  |  |H2|  |
-04|FF|  |WW|  |  |
- Y+--------------+
